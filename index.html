@@ -5,216 +5,89 @@
   <title>Family Finance Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      margin: 16px;
-      background: #f5f5f7;
-    }
-    h1 {
-      font-size: 22px;
-      margin-bottom: 8px;
-    }
-    h2 {
-      font-size: 18px;
-      margin-bottom: 8px;
-    }
-    .card {
-      background: #ffffff;
-      border-radius: 14px;
-      padding: 14px;
-      margin-bottom: 16px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-    }
-    label {
-      font-size: 13px;
-      display: block;
-      margin-top: 8px;
-      margin-bottom: 2px;
-    }
-    input, select {
-      width: 100%;
-      padding: 10px;
-      margin: 2px 0 6px;
-      border-radius: 10px;
-      border: 1px solid #d0d0d5;
-      font-size: 14px;
-      box-sizing: border-box;
-    }
-    button {
-      width: 100%;
-      padding: 12px;
-      background: #007bff;
-      color: white;
-      border-radius: 10px;
-      border: none;
-      font-size: 15px;
-      font-weight: 600;
-      margin-top: 8px;
-    }
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
-    }
-    .summary-item {
-      background: #f9fafb;
-      border-radius: 10px;
-      padding: 8px;
-      font-size: 13px;
-    }
-    .summary-label {
-      color: #666;
-      font-size: 12px;
-    }
-    .summary-value {
-      font-weight: 700;
-      margin-top: 2px;
-    }
-    .summary-net {
-      margin-top: 10px;
-      font-size: 14px;
-      font-weight: 600;
-    }
-    .filter-row {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-    .filter-row input {
-      flex: 1;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
-    }
-    th, td {
-      padding: 6px 4px;
-      border-bottom: 1px solid #eee;
-      text-align: left;
-      white-space: nowrap;
-    }
-    th {
-      font-weight: 600;
-      font-size: 11px;
-      text-transform: uppercase;
-      color: #666;
-    }
-    .amount {
-      text-align: right;
-    }
-    .tag {
-      display: inline-block;
-      padding: 2px 6px;
-      border-radius: 999px;
-      font-size: 10px;
-      text-transform: capitalize;
-    }
-    .tag-income { background: #e0f7e9; color: #157347; }
-    .tag-expense { background: #ffe0e6; color: #b02a37; }
-    .tag-saving { background: #e0ecff; color: #0d6efd; }
-    .tag-investment { background: #fff3cd; color: #997404; }
-
-    @media (min-width: 768px) {
-      body { max-width: 600px; margin: 16px auto; }
-    }
+    body { font-family: system-ui; margin: 16px; background: #f5f5f7; }
+    .card { background: #fff; padding: 14px; border-radius: 12px; margin-bottom:16px; }
+    input, select { width:100%; padding:10px; margin:6px 0; border:1px solid #ccc; border-radius:8px; }
+    button { width:100%; padding:12px; background:#007bff; color:white; border-radius:8px; border:none; }
+    table { width:100%; border-collapse: collapse; font-size: 12px; }
+    th, td { padding:6px 4px; border-bottom:1px solid #eee; }
+    th { text-transform: uppercase; font-size:10px; color:#666; }
+    .amount { text-align:right; }
+    .tag { padding:2px 6px; border-radius:999px; font-size:10px; color:#000; }
+    .tag-income { background:#d4f8e8; }
+    .tag-expense { background:#ffd7dd; }
+    .tag-saving { background:#dee7ff; }
+    .tag-investment { background:#fff1cc; }
   </style>
 </head>
 
 <body>
-  <h1>Family Finance Dashboard</h1>
 
-  <!-- INPUT FORM -->
-  <div class="card">
-    <h2>Input Transaction</h2>
+<h1>Family Finance Dashboard</h1>
 
-    <label for="dateInput">Date</label>
-    <input type="date" id="dateInput">
+<div class="card">
+  <h2>Input Transaction</h2>
 
-    <label for="typeInput">Type</label>
-    <select id="typeInput" onchange="updateCategories()">
-      <option value="">Choose type</option>
-      <option value="income">Income</option>
-      <option value="expense">Expense</option>
-      <option value="saving">Saving</option>
-      <option value="investment">Investment</option>
-    </select>
+  <label>Date</label>
+  <input type="date" id="dateInput">
 
-    <label for="categoryInput">Category</label>
-    <select id="categoryInput"></select>
+  <label>Type</label>
+  <select id="typeInput" onchange="updateCategories()">
+    <option value="">Choose type</option>
+    <option value="income">Income</option>
+    <option value="expense">Expense</option>
+    <option value="saving">Saving</option>
+    <option value="investment">Investment</option>
+  </select>
 
-    <label for="amountInput">Amount</label>
-    <input type="number" id="amountInput" placeholder="Enter amount">
+  <label>Category</label>
+  <select id="categoryInput"></select>
 
-    <button onclick="saveData()">Save</button>
-  </div>
+  <label>Amount</label>
+  <input type="number" id="amountInput">
 
-  <!-- DASHBOARD SUMMARY -->
-  <div class="card">
-    <div class="filter-row">
-      <h2 style="margin:0;">Summary</h2>
-      <input type="month" id="monthFilter" onchange="updateDashboard()">
-    </div>
-    <div class="summary-grid">
-      <div class="summary-item">
-        <div class="summary-label">Income</div>
-        <div class="summary-value" id="sumIncome">0</div>
-      </div>
-      <div class="summary-item">
-        <div class="summary-label">Expense</div>
-        <div class="summary-value" id="sumExpense">0</div>
-      </div>
-      <div class="summary-item">
-        <div class="summary-label">Saving</div>
-        <div class="summary-value" id="sumSaving">0</div>
-      </div>
-      <div class="summary-item">
-        <div class="summary-label">Investment</div>
-        <div class="summary-value" id="sumInvestment">0</div>
-      </div>
-    </div>
-    <div class="summary-net" id="netCashText">Net cash: 0</div>
-  </div>
+  <button onclick="saveData()">Save</button>
+</div>
 
-  <!-- CHART -->
-  <div class="card">
-    <h2>Expense by Category</h2>
-    <canvas id="expenseChart" height="220"></canvas>
-  </div>
+<div class="card">
+  <h2>Summary</h2>
+  <input type="month" id="monthFilter" onchange="updateDashboard()">
+  <p>Income: <span id="sumIncome">0</span></p>
+  <p>Expense: <span id="sumExpense">0</span></p>
+  <p>Saving: <span id="sumSaving">0</span></p>
+  <p>Investment: <span id="sumInvestment">0</span></p>
+  <h3 id="netCashText">Net cash: 0</h3>
+</div>
 
-  <!-- TABLE -->
-  <div class="card">
-    <h2>Transactions</h2>
-    <div style="overflow-x:auto;">
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Type</th>
-            <th>Category</th>
-            <th class="amount">Amount</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody">
-          <!-- rows injected by JS -->
-        </tbody>
-      </table>
-    </div>
-  </div>
+<div class="card">
+  <h2>Expense by Category</h2>
+  <canvas id="expenseChart" height="220"></canvas>
+</div>
 
-  <!-- EXPORT -->
-  <div class="card">
-    <h2>Export</h2>
-    <button onclick="exportCSV()">Download CSV</button>
-  </div>
+<div class="card">
+  <h2>Transactions</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th><th>Type</th><th>Category</th><th class="amount">Amount</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2>Export CSV</h2>
+  <button onclick="exportCSV()">Download CSV</button>
+</div>
 
 <script>
 const STORAGE_KEY = "familyFinanceData_v1";
+
+const GOOGLE_SHEETS_WEBAPP_URL = "YOUR_WEB_APP_URL_HERE";  // ⬅️ GANTI DI SINI
 
 const categories = {
   income: ["salary", "side hustle"],
@@ -225,23 +98,19 @@ const categories = {
 
 let expenseChart = null;
 
-// --- Helpers ---
 function getData() {
   return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
 }
+
 function setData(data) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
-
-function formatMoney(num) {
-  if (!num) return "0";
-  return new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(num);
 }
 
 function updateCategories() {
   const type = document.getElementById("typeInput").value;
   const catSelect = document.getElementById("categoryInput");
   catSelect.innerHTML = "";
+
   if (categories[type]) {
     categories[type].forEach(c => {
       const opt = document.createElement("option");
@@ -252,71 +121,69 @@ function updateCategories() {
   }
 }
 
-function saveData() {
-  const date = document.getElementById("dateInput").value;
-  const type = document.getElementById("typeInput").value;
-  const category = document.getElementById("categoryInput").value;
-  const amount = document.getElementById("amountInput").value;
+async function syncToGoogleSheets(entry) {
+  try {
+    await fetch(GOOGLE_SHEETS_WEBAPP_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(entry)
+    });
+  } catch (e) {
+    console.log("Sync failed:", e);
+  }
+}
 
-  if (!date || !type || !category || !amount) {
-    alert("Please complete all fields");
+function saveData() {
+  const entry = {
+    date: document.getElementById("dateInput").value,
+    type: document.getElementById("typeInput").value,
+    category: document.getElementById("categoryInput").value,
+    amount: Number(document.getElementById("amountInput").value)
+  };
+
+  if (!entry.date || !entry.type || !entry.category || !entry.amount) {
+    alert("Fill all fields");
     return;
   }
 
-  const entry = {
-    date,
-    type,
-    category,
-    amount: Number(amount)
-  };
-
+  // save locally
   const data = getData();
   data.push(entry);
   setData(data);
 
-  document.getElementById("amountInput").value = "";
+  // sync to Google Sheets
+  syncToGoogleSheets(entry);
+
   alert("Saved");
-
-  // set filter month to current transaction month jika belum di-set
-  const monthFilter = document.getElementById("monthFilter");
-  if (!monthFilter.value) {
-    monthFilter.value = date.slice(0, 7); // YYYY-MM
-  }
-
   updateDashboard();
 }
 
 function getFilteredData() {
   const data = getData();
-  const monthFilter = document.getElementById("monthFilter").value;
-  if (!monthFilter) return data;
-  // filter by YYYY-MM prefix
-  return data.filter(d => d.date && d.date.startsWith(monthFilter));
+  const month = document.getElementById("monthFilter").value;
+  if (!month) return data;
+  return data.filter(x => x.date.startsWith(month));
 }
 
 function updateSummary() {
   const data = getFilteredData();
-
-  let sumIncome = 0,
-      sumExpense = 0,
-      sumSaving = 0,
-      sumInvestment = 0;
+  let income=0, expense=0, saving=0, invest=0;
 
   data.forEach(d => {
-    if (d.type === "income") sumIncome += d.amount;
-    if (d.type === "expense") sumExpense += d.amount;
-    if (d.type === "saving") sumSaving += d.amount;
-    if (d.type === "investment") sumInvestment += d.amount;
+    if (d.type === "income") income += d.amount;
+    if (d.type === "expense") expense += d.amount;
+    if (d.type === "saving") saving += d.amount;
+    if (d.type === "investment") invest += d.amount;
   });
 
-  document.getElementById("sumIncome").innerText = formatMoney(sumIncome);
-  document.getElementById("sumExpense").innerText = formatMoney(sumExpense);
-  document.getElementById("sumSaving").innerText = formatMoney(sumSaving);
-  document.getElementById("sumInvestment").innerText = formatMoney(sumInvestment);
+  document.getElementById("sumIncome").innerText = income;
+  document.getElementById("sumExpense").innerText = expense;
+  document.getElementById("sumSaving").innerText = saving;
+  document.getElementById("sumInvestment").innerText = invest;
 
-  const netCash = sumIncome - (sumExpense + sumSaving + sumInvestment);
-  const netText = `Net cash: ${netCash >= 0 ? "" : "-"}${formatMoney(Math.abs(netCash))}`;
-  document.getElementById("netCashText").innerText = netText;
+  const net = income - (expense + saving + invest);
+  document.getElementById("netCashText").innerText = "Net cash: " + net;
 }
 
 function updateTable() {
@@ -324,127 +191,45 @@ function updateTable() {
   const tbody = document.getElementById("tableBody");
   tbody.innerHTML = "";
 
-  // sort by date descending
-  data.sort((a, b) => (a.date < b.date ? 1 : -1));
+  data.sort((a,b) => a.date < b.date ? 1 : -1);
 
   data.forEach(d => {
     const tr = document.createElement("tr");
-
-    const tdDate = document.createElement("td");
-    tdDate.textContent = d.date;
-    tr.appendChild(tdDate);
-
-    const tdType = document.createElement("td");
-    const span = document.createElement("span");
-    span.textContent = d.type;
-    span.classList.add("tag", `tag-${d.type}`);
-    tdType.appendChild(span);
-    tr.appendChild(tdType);
-
-    const tdCat = document.createElement("td");
-    tdCat.textContent = d.category;
-    tr.appendChild(tdCat);
-
-    const tdAmount = document.createElement("td");
-    tdAmount.textContent = formatMoney(d.amount);
-    tdAmount.classList.add("amount");
-    tr.appendChild(tdAmount);
-
+    tr.innerHTML = `
+      <td>${d.date}</td>
+      <td><span class="tag tag-${d.type}">${d.type}</span></td>
+      <td>${d.category}</td>
+      <td class="amount">${d.amount}</td>
+    `;
     tbody.appendChild(tr);
   });
-
-  if (data.length === 0) {
-    const tr = document.createElement("tr");
-    const td = document.createElement("td");
-    td.colSpan = 4;
-    td.textContent = "No data for this period.";
-    tr.appendChild(td);
-    tbody.appendChild(tr);
-  }
 }
 
 function updateChart() {
-  const data = getFilteredData();
-  // only expense
-  const expenseData = data.filter(d => d.type === "expense");
-  const byCategory = {};
+  const data = getFilteredData().filter(d => d.type === "expense");
+  const byCat = {};
+  data.forEach(d => byCat[d.category] = (byCat[d.category] || 0) + d.amount);
 
-  expenseData.forEach(d => {
-    if (!byCategory[d.category]) byCategory[d.category] = 0;
-    byCategory[d.category] += d.amount;
-  });
+  const labels = Object.keys(byCat);
+  const values = Object.values(byCat);
 
-  const labels = Object.keys(byCategory);
-  const values = Object.values(byCategory);
+  const ctx = document.getElementById("expenseChart");
 
-  const ctx = document.getElementById("expenseChart").getContext("2d");
-
-  if (expenseChart) {
-    expenseChart.destroy();
-  }
-
-  if (labels.length === 0) {
-    // kalau tidak ada data expense, bikin chart kosong
-    expenseChart = new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels: ["No data"],
-        datasets: [{ data: [0] }]
-      },
-      options: {
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true } }
-      }
-    });
-    return;
-  }
+  if (expenseChart) expenseChart.destroy();
 
   expenseChart = new Chart(ctx, {
     type: "bar",
-    data: {
-      labels: labels,
-      datasets: [{
-        data: values
-      }]
-    },
-    options: {
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: function(ctx) {
-              return formatMoney(ctx.parsed.y);
-            }
-          }
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true
-        }
-      }
-    }
+    data: { labels, datasets: [{ data: values }] },
+    options: { plugins: { legend: { display:false }}, scales:{ y:{beginAtZero:true}} }
   });
-}
-
-function updateDashboard() {
-  updateSummary();
-  updateTable();
-  updateChart();
 }
 
 function exportCSV() {
   const data = getData();
-  if (data.length === 0) {
-    alert("No data to export");
-    return;
-  }
+  let csv = "date,type,category,amount\n";
+  csv += data.map(d => `${d.date},${d.type},${d.category},${d.amount}`).join("\n");
 
-  const header = "date,type,category,amount\n";
-  const rows = data.map(d => `${d.date},${d.type},${d.category},${d.amount}`).join("\n");
-  const csv = header + rows;
-
-  const blob = new Blob([csv], { type: "text/csv" });
+  const blob = new Blob([csv], {type:"text/csv"});
   const url = URL.createObjectURL(blob);
 
   const a = document.createElement("a");
@@ -453,16 +238,16 @@ function exportCSV() {
   a.click();
 }
 
-// --- Init ---
-window.onload = function() {
-  // set default date today
+function updateDashboard() {
+  updateSummary();
+  updateTable();
+  updateChart();
+}
+
+window.onload = () => {
   const today = new Date().toISOString().slice(0,10);
   document.getElementById("dateInput").value = today;
-
-  // default month filter = bulan ini
-  const month = today.slice(0,7);
-  document.getElementById("monthFilter").value = month;
-
+  document.getElementById("monthFilter").value = today.slice(0,7);
   updateCategories();
   updateDashboard();
 };
