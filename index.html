@@ -69,4 +69,282 @@
   <h3 id="netCashText">Net cash: 0</h3>
 </div>
 
-<div class=
+<div class="card">
+  <h2>Expense by Category</h2>
+  <canvas id="expenseChart" height="220"></canvas>
+</div>
+
+<div class="card">
+  <h2>Transactions</h2>
+  <div style="overflow-x:auto;">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Category</th>
+          <th class="amount">Amount</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Export CSV</h2>
+  <button onclick="exportCSV()">Download CSV</button>
+</div>
+
+<script>
+const STORAGE_KEY = "familyFinanceData_v1";
+
+// URL Web App dari Apps Script
+const GOOGLE_SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxJ9BbP8bzjbjUi9JF5zlB1okwKj22tprcCWsdpOcm95tHJFV3YlSzeoeIVGhUY-oqcdQ/exec";
+
+const categories = {
+  income: ["salary", "side hustle"],
+  expense: ["bath care", "fnb", "belanja masak", "utilities", "transport", "food"],
+  saving: ["home", "pension", "health"],
+  investment: ["saham", "SBN", "others"]
+};
+
+let expenseChart = null;
+
+// ====== Local Storage Helpers ======
+function getData() {
+  return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+}
+function setData(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+// ====== UI Helpers ======
+function updateCategories() {
+  const type = document.getElementById("typeInput").value;
+  const catSelect = document.getElementById("categoryInput");
+  catSelect.innerHTML = "";
+
+  if (categories[type]) {
+    categories[type].forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c;
+      opt.textContent = c;
+      catSelect.appendChild(opt);
+    });
+  }
+}
+
+function formatMoney(num) {
+  if (!num) return "0";
+  return new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(num);
+}
+
+// ====== Sync to Google Sheets (Write) ======
+async function syncToGoogleSheets(entry) {
+  if (!GOOGLE_SHEETS_WEBAPP_URL || GOOGLE_SHEETS_WEBAPP_URL === "https://docs.google.com/spreadsheets/d/1XZDWeyl45sO7KNyUAty0RVCPbAP49R542si8gyu4MLQ/edit?gid=0#gid=0") {
+    console.log("Google Sheets URL not set, skip sync");
+    return;
+  }
+  try {
+    await fetch(GOOGLE_SHEETS_WEBAPP_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(entry)
+    });
+  } catch (e) {
+    console.log("Sync to Sheets failed:", e);
+  }
+}
+
+// ====== Sync from Google Sheets (Read) ======
+async function loadFromGoogleSheets() {
+  if (!GOOGLE_SHEETS_WEBAPP_URL || GOOGLE_SHEETS_WEBAPP_URL === "https://docs.google.com/spreadsheets/d/1XZDWeyl45sO7KNyUAty0RVCPbAP49R542si8gyu4MLQ/edit?gid=0#gid=0") {
+    console.log("Google Sheets URL not set, skip load");
+    updateDashboard();
+    return;
+  }
+
+  try {
+    const res = await fetch(GOOGLE_SHEETS_WEBAPP_URL); // doGet
+    const data = await res.json();
+
+    // data format dari Apps Script: [{date, type, category, amount, notes}, ...]
+    if (Array.isArray(data)) {
+      console.log("Loaded from Sheets:", data.length, "rows");
+      setData(data);
+    }
+  } catch (e) {
+    console.log("Load from Sheets failed:", e);
+  }
+
+  updateDashboard();
+}
+
+// ====== Save Data ======
+function saveData() {
+  const date = document.getElementById("dateInput").value;
+  const type = document.getElementById("typeInput").value;
+  const category = document.getElementById("categoryInput").value;
+  const amount = Number(document.getElementById("amountInput").value);
+  const notes = document.getElementById("notesInput").value || "";
+
+  if (!date || !type || !category || !amount) {
+    alert("Please complete all required fields");
+    return;
+  }
+
+  const entry = { date, type, category, amount, notes };
+
+  const data = getData();
+  data.push(entry);
+  setData(data);
+
+  syncToGoogleSheets(entry);
+
+  document.getElementById("amountInput").value = "";
+  document.getElementById("notesInput").value = "";
+  alert("Saved");
+  updateDashboard();
+}
+
+// ====== Dashboard: Filter, Summary, Table, Chart ======
+function getFilteredData() {
+  const data = getData();
+  const month = document.getElementById("monthFilter").value;
+  if (!month) return data;
+  return data.filter(x => x.date && x.date.startsWith(month));
+}
+
+function updateSummary() {
+  const data = getFilteredData();
+  let income=0, expense=0, saving=0, invest=0;
+
+  data.forEach(d => {
+    if (d.type === "income") income += d.amount;
+    if (d.type === "expense") expense += d.amount;
+    if (d.type === "saving") saving += d.amount;
+    if (d.type === "investment") invest += d.amount;
+  });
+
+  document.getElementById("sumIncome").innerText = formatMoney(income);
+  document.getElementById("sumExpense").innerText = formatMoney(expense);
+  document.getElementById("sumSaving").innerText = formatMoney(saving);
+  document.getElementById("sumInvestment").innerText = formatMoney(invest);
+
+  const net = income - (expense + saving + invest);
+  document.getElementById("netCashText").innerText = "Net cash: " + formatMoney(net);
+}
+
+function updateTable() {
+  const data = getFilteredData();
+  const tbody = document.getElementById("tableBody");
+  tbody.innerHTML = "";
+
+  if (data.length === 0) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 5;
+    td.textContent = "No data for this period.";
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+    return;
+  }
+
+  data.sort((a,b) => a.date < b.date ? 1 : -1);
+
+  data.forEach(d => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${d.date}</td>
+      <td><span class="tag tag-${d.type}">${d.type}</span></td>
+      <td>${d.category}</td>
+      <td class="amount">${formatMoney(d.amount)}</td>
+      <td>${d.notes || ""}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function updateChart() {
+  const data = getFilteredData().filter(d => d.type === "expense");
+  const byCat = {};
+  data.forEach(d => { byCat[d.category] = (byCat[d.category] || 0) + d.amount; });
+
+  const labels = Object.keys(byCat);
+  const values = Object.values(byCat);
+
+  const ctx = document.getElementById("expenseChart").getContext("2d");
+  if (expenseChart) expenseChart.destroy();
+
+  if (labels.length === 0) {
+    expenseChart = new Chart(ctx, {
+      type: "bar",
+      data: { labels: ["No data"], datasets: [{ data: [0] }] },
+      options: { plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} }
+    });
+    return;
+  }
+
+  expenseChart = new Chart(ctx, {
+    type: "bar",
+    data: { labels, datasets: [{ data: values }] },
+    options: {
+      plugins: {
+        legend: { display:false },
+        tooltip: {
+          callbacks: {
+            label: c => formatMoney(c.parsed.y)
+          }
+        }
+      },
+      scales: { y: { beginAtZero:true } }
+    }
+  });
+}
+
+function updateDashboard() {
+  updateSummary();
+  updateTable();
+  updateChart();
+}
+
+// ====== Export CSV ======
+function exportCSV() {
+  const data = getData();
+  if (!data.length) {
+    alert("No data to export");
+    return;
+  }
+
+  let csv = "date,type,category,amount,notes\n";
+  csv += data
+    .map(d => {
+      const safeNotes = (d.notes || "").replace(/"/g, '""');
+      return `${d.date},${d.type},${d.category},${d.amount},"${safeNotes}"`;
+    })
+    .join("\n");
+
+  const blob = new Blob([csv], {type:"text/csv"});
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "family_finance.csv";
+  a.click();
+}
+
+// ====== Init ======
+window.onload = () => {
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById("dateInput").value = today;
+  document.getElementById("monthFilter").value = today.slice(0,7);
+  updateCategories();
+  loadFromGoogleSheets();
+};
+</script>
+
+</body>
+</html>
