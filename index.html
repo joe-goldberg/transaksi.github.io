@@ -228,12 +228,36 @@ function saveData() {
 }
 
 // ====== Dashboard: Filter, Summary, Table, Chart ======
+function getMonthKey(dateStr) {
+  if (!dateStr) return null;
+
+  // kalau sudah "YYYY-MM-DD"
+  if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+    return dateStr.slice(0, 7); // "YYYY-MM"
+  }
+
+  // kalau "YYYY-MM" saja
+  if (/^\d{4}-\d{2}$/.test(dateStr)) {
+    return dateStr;
+  }
+
+  // fallback: coba parse dengan Date()
+  const d = new Date(dateStr);
+  if (!isNaN(d)) {
+    return d.toISOString().slice(0, 7);
+  }
+
+  return null;
+}
+
 function getFilteredData() {
   const data = getData();
-  const month = document.getElementById("monthFilter").value;
+  const month = document.getElementById("monthFilter").value; // "2025-11"
   if (!month) return data;
-  return data.filter(x => x.date && x.date.startsWith(month));
+
+  return data.filter(x => getMonthKey(x.date) === month);
 }
+
 
 function updateSummary() {
   const data = getFilteredData();
