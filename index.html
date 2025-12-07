@@ -189,14 +189,15 @@ function saveData() {
   const type = document.getElementById("typeInput").value;
   const category = document.getElementById("categoryInput").value;
   const amount = Number(document.getElementById("amountInput").value);
+  const notes = document.getElementById("notesInput").value || "";
 
-  if (!date || !type || !category || !amount) {
+  if (!date || !type || !category || !amount || !notes) {
     alert("Please complete all fields");
     return;
   }
 
   //const entry = { date, type, category, amount };
-  const notes = document.getElementById("notesInput").value || "";
+  
 
   const entry = {
     date,
