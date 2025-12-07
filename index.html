@@ -53,6 +53,10 @@
   <label for="amountInput">Amount</label>
   <input type="number" id="amountInput" placeholder="Enter amount">
 
+  <label for="NotesInput">Notes</label>
+  <input type="text" id="notesInput" placeholder="Optional notes (e.g. bought soap)">
+
+
   <button onclick="saveData()">Save</button>
 </div>
 
@@ -81,6 +85,7 @@
           <th>Type</th>
           <th>Category</th>
           <th class="amount">Amount</th>
+          <th>Notes</th>
         </tr>
       </thead>
       <tbody id="tableBody"></tbody>
@@ -190,7 +195,17 @@ function saveData() {
     return;
   }
 
-  const entry = { date, type, category, amount };
+  //const entry = { date, type, category, amount };
+  const notes = document.getElementById("notesInput").value || "";
+
+  const entry = {
+    date,
+    type,
+    category,
+    amount,
+    notes
+  };
+  
 
   // local
   const data = getData();
@@ -201,6 +216,7 @@ function saveData() {
   syncToGoogleSheets(entry);
 
   document.getElementById("amountInput").value = "";
+  document.getElementById("notesInput").value = "";
   alert("Saved");
   updateDashboard();
 }
@@ -257,6 +273,7 @@ function updateTable() {
       <td><span class="tag tag-${d.type}">${d.type}</span></td>
       <td>${d.category}</td>
       <td class="amount">${formatMoney(d.amount)}</td>
+      <td>${d.notes || ""}</td>
     `;
     tbody.appendChild(tr);
   });
